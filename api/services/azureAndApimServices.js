@@ -6,7 +6,7 @@ const ejs = require("ejs");
 
 module.exports = {
 
-    sendAzureAppRegistrationEmail: async (xid, apimAppName, org, developer) => {
+    sendAzureAppRegistrationEmail: async (xid, apimAppName, org, developer, appType) => {
 
         let appOwnerEmail = '';
         let teamMembersMailIds = '';
@@ -37,7 +37,7 @@ module.exports = {
         }
 
         //*Get  Azure App Creation Email Template
-        ejs.renderFile("./views/azureProjectCreationTemplate.ejs", { appName: apimAppName, appOwnerEmail: appOwnerEmail, isTeam: isTeam }, async function (error, htmlToSend) {
+        ejs.renderFile("./views/azureProjectCreationTemplate.ejs", { appName: apimAppName, appOwnerEmail: appOwnerEmail, isTeam: isTeam, appType: appType }, async function (error, htmlToSend) {
             if (error) {
                 sails.log.error("XID: " + xid + " | ", new Date, `: AppCreationService.sendMail: ERROR: Failed to get azure app creation email template: Error is ${error}`);
                 isEmailTemplateRenderError = true;
@@ -66,7 +66,7 @@ module.exports = {
 
     },
 
-    azureAppCreationAndUpdationInApim: async (xid, azureToken, azureConfig, azureAppName, redirectUriConfig, groupMembershipClaims, idToken, accessToken, samlToken, nononceScope, apimToken, apimConfig, apimAppName, apimAppId, org, developer, clientIdRegex, isClientSecretExpiry) => {
+    azureAppCreationAndUpdationInApim: async (xid, azureToken, azureConfig, azureAppName, redirectUriConfig, groupMembershipClaims, idToken, accessToken, samlToken, nononceScope, apimToken, apimConfig, apimAppName, apimAppId, org, developer, clientIdRegex, isClientSecretExpiry, appType) => {
 
         //* Get App Details from apim
         let apimAppDetailsResult = await apimServices.getAppDetailsUsingAppId(xid, apimToken, apimConfig, apimAppId, org, clientIdRegex, isClientSecretExpiry);
@@ -100,17 +100,17 @@ module.exports = {
                         let addClientSecretValidityResult = await clientSecretValidityServices.addClientSecretValidity(xid, apimAppId, org, azureAppDetails.azureObjectId, apimAppName, azureAppDetails.azureClientSecretId, azureAppDetails.azureClientSecretExpiryDate, developer);
 
                         //* Update application details to database
-                        let azureAppIdUpdateResult = await ApplicationDetails.update({id: apimAppId, AzureRegisteredAppId: '' }).set({AzureRegisteredAppId: azureAppDetails.azureObjectId});
-                        
+                        let azureAppIdUpdateResult = await ApplicationDetails.update({ id: apimAppId, AzureRegisteredAppId: '' }).set({ AzureRegisteredAppId: azureAppDetails.azureObjectId });
+
                         //const appUpdateStatusResult = await ApigeeApp.update({ AppID: app.id, AzureRegisteredAppId: '' }).set({ AzureRegistered: 1, AzureRegisteredAppId: appRegisteredResult[1].id, AppDisplayName: app.AppName})
-                        
+
                         sails.log.info("XID: " + xid + " | ", new Date, `: azureAndApimServices.azureAppCreationAndUpdationInApim: info: successfully updated the application details table `);
-                
-                        let azureAppregisteredUpdateResult = await ApplicationDetails.update({id: apimAppId}).set({AzureRegistered: 1});
+
+                        let azureAppregisteredUpdateResult = await ApplicationDetails.update({ id: apimAppId }).set({ AzureRegistered: 1 });
                         sails.log.info("XID: " + xid + " | ", new Date, `: azureAndApimServices.azureAppCreationAndUpdationInApim: info: azure registered field updated!`);
-                
+
                         //* Send Azure App Creation email
-                        let azureAppCreationEmailResult = await module.exports.sendAzureAppRegistrationEmail(xid, apimAppName, org, developer);
+                        let azureAppCreationEmailResult = await module.exports.sendAzureAppRegistrationEmail(xid, apimAppName, org, developer, appType);
 
                         return ['SUCCESS', `Successfully created the azure application for apim app ${apimAppName} under org ${org}. Azure object id is ${azureAppDetails.azureObjectId}`];
 
@@ -130,7 +130,7 @@ module.exports = {
         }
     },
 
-    azureAppCreationAndScopeAddition: async (xid, azureToken, azureConfig, azureAppName, redirectUriConfig, groupMembershipClaims, idToken, accessToken, samlToken, nononceScope, apimToken, apimConfig, apimAppName, apimAppId, org, developer, clientIdRegex, isClientSecretExpiry, scopes) => {
+    azureAppCreationAndScopeAddition: async (xid, azureToken, azureConfig, azureAppName, redirectUriConfig, groupMembershipClaims, idToken, accessToken, samlToken, nononceScope, apimToken, apimConfig, apimAppName, apimAppId, org, developer, clientIdRegex, isClientSecretExpiry, scopes, appType) => {
 
         //* Get App Details from apim
         let apimAppDetailsResult = await apimServices.getAppDetailsUsingAppId(xid, apimToken, apimConfig, apimAppId, org, clientIdRegex, isClientSecretExpiry);
@@ -146,7 +146,7 @@ module.exports = {
             else {
 
                 //* Create app in azure
-                let appCreationResult = await azureServices.azureAppCreation(xid, azureToken, azureConfig, azureAppName, redirectUriConfig, groupMembershipClaims, idToken, accessToken, samlToken, nononceScope, org, developer, apimAppId,  apimAppName);
+                let appCreationResult = await azureServices.azureAppCreation(xid, azureToken, azureConfig, azureAppName, redirectUriConfig, groupMembershipClaims, idToken, accessToken, samlToken, nononceScope, org, developer, apimAppId, apimAppName);
                 if (appCreationResult[0] === 'SUCCESS') {
 
                     let azureAppDetails = appCreationResult[1];
@@ -170,12 +170,12 @@ module.exports = {
                             let addClientSecretValidityResult = await clientSecretValidityServices.addClientSecretValidity(xid, apimAppId, org, azureAppDetails.azureObjectId, apimAppName, azureAppDetails.azureClientSecretId, azureAppDetails.azureClientSecretExpiryDate, developer);
 
                             //* Update application details to database
-                            let azureAppIdUpdateResult = await ApplicationDetails.update({id: apimAppId}).set({AzureRegisteredAppId: azureAppDetails.azureObjectId});
+                            let azureAppIdUpdateResult = await ApplicationDetails.update({ id: apimAppId }).set({ AzureRegisteredAppId: azureAppDetails.azureObjectId });
 
                             //* Send Azure App Creation email
-                            let azureAppCreationEmailResult = await module.exports.sendAzureAppRegistrationEmail(xid, apimAppName, org, developer);
+                            let azureAppCreationEmailResult = await module.exports.sendAzureAppRegistrationEmail(xid, apimAppName, org, developer, appType);
 
-                            
+
                             return ['SUCCESS', `Successfully created the azure application for apim app ${apimAppName} under org ${org} and also added scope. Azure object id is ${azureAppDetails.azureObjectId}`];
                         }
                         else if (scopeAdditionResult[0] === 'ERROR') {
@@ -199,7 +199,7 @@ module.exports = {
         }
     },
 
-    azureAppCreationAndResourceScopeAddition: async (xid, azureToken, azureConfig, azureAppName, redirectUriConfig, groupMembershipClaims, idToken, accessToken, samlToken, nononceScope, apimToken, apimConfig, apimAppName, apimAppId, org, developer, clientIdRegex, isClientSecretExpiry, scopes) => {
+    azureAppCreationAndResourceScopeAddition: async (xid, azureToken, azureConfig, azureAppName, redirectUriConfig, groupMembershipClaims, idToken, accessToken, samlToken, nononceScope, apimToken, apimConfig, apimAppName, apimAppId, org, developer, clientIdRegex, isClientSecretExpiry, scopes, appType) => {
 
         //* Get App Details from apim
         let apimAppDetailsResult = await apimServices.getAppDetailsUsingAppId(xid, apimToken, apimConfig, apimAppId, org, clientIdRegex, isClientSecretExpiry);
@@ -215,7 +215,7 @@ module.exports = {
             else {
 
                 //* Create app in azure
-                let appCreationResult = await azureServices.azureAppCreation(xid, azureToken, azureConfig, azureAppName, redirectUriConfig, groupMembershipClaims, idToken, accessToken, samlToken, nononceScope, org, developer, apimAppId,  apimAppName);
+                let appCreationResult = await azureServices.azureAppCreation(xid, azureToken, azureConfig, azureAppName, redirectUriConfig, groupMembershipClaims, idToken, accessToken, samlToken, nononceScope, org, developer, apimAppId, apimAppName);
                 if (appCreationResult[0] === 'SUCCESS') {
 
                     let azureAppDetails = appCreationResult[1];
@@ -232,29 +232,29 @@ module.exports = {
 
                             //* Add resource role
                             let roleAdditionResult = await azureServices.addResourceRole(xid, azureToken, azureConfig, apimAppId, scopes, azureAppDetails.azureObjectId, azureAppName);
-                            if(roleAdditionResult[0] === 'SUCCESS') {
+                            if (roleAdditionResult[0] === 'SUCCESS') {
 
                                 //* Delete the old app entry from clientsecret details table if its a expiry app
-                            if (isClientSecretExpiry) {
-                                let deleteClientSecretValidityResult = await clientSecretValidityServices.deleteClientSecretValidity(xid, apimAppId);
+                                if (isClientSecretExpiry) {
+                                    let deleteClientSecretValidityResult = await clientSecretValidityServices.deleteClientSecretValidity(xid, apimAppId);
+                                }
+
+                                //* Add clientsecret expiry details to database
+                                let addClientSecretValidityResult = await clientSecretValidityServices.addClientSecretValidity(xid, apimAppId, org, azureAppDetails.azureObjectId, apimAppName, azureAppDetails.azureClientSecretId, azureAppDetails.azureClientSecretExpiryDate, developer);
+
+                                //* Update application details to database
+                                let azureAppIdUpdateResult = await ApplicationDetails.update({ id: apimAppId }).set({ AzureRegisteredAppId: azureAppDetails.azureObjectId });
+
+                                //* Send Azure App Creation email
+                                let azureAppCreationEmailResult = await module.exports.sendAzureAppRegistrationEmail(xid, apimAppName, org, developer, appType);
+
+                                return ['SUCCESS', `Successfully created the azure application for apim app ${apimAppName} under org ${org} and also added resource scope and role. Azure object id is ${azureAppDetails.azureObjectId}`];
                             }
-
-                            //* Add clientsecret expiry details to database
-                            let addClientSecretValidityResult = await clientSecretValidityServices.addClientSecretValidity(xid, apimAppId, org, azureAppDetails.azureObjectId, apimAppName, azureAppDetails.azureClientSecretId, azureAppDetails.azureClientSecretExpiryDate, developer);
-
-                            //* Update application details to database
-                            let azureAppIdUpdateResult = await ApplicationDetails.update({id: apimAppId}).set({AzureRegisteredAppId: azureAppDetails.azureObjectId});
-                            
-                            //* Send Azure App Creation email
-                            let azureAppCreationEmailResult = await module.exports.sendAzureAppRegistrationEmail(xid, apimAppName, org, developer);
-
-                            return ['SUCCESS', `Successfully created the azure application for apim app ${apimAppName} under org ${org} and also added resource scope and role. Azure object id is ${azureAppDetails.azureObjectId}`];
-                            }
-                            else if(roleAdditionResult[0] === 'ERROR') {
+                            else if (roleAdditionResult[0] === 'ERROR') {
                                 let deleteAzureAppResult = await azureServices.deleteAzureApp(xid, azureToken, azureConfig, azureAppDetails.azureObjectId);
                                 return roleAdditionResult;
                             }
-                            
+
                         }
                         else if (scopeAdditionResult[0] === 'ERROR') {
                             let deleteAzureAppResult = await azureServices.deleteAzureApp(xid, azureToken, azureConfig, azureAppDetails.azureObjectId);

@@ -188,6 +188,11 @@
                                                                             and is now ready to view on API Portal.</p>
                                                                         <p style='font-size:10.5pt;font-family:"Arial",sans-serif;color:#333333'>Note: Access to individual APIs will be granted once approved by respective API Owners
                                                                         </p>
+                                                                        <% if(appType == "B2C") { %>
+                                                                        <p style='font-size:10.5pt;font-family:"Arial",sans-serif;color:#333333'><strong>NOTE: 
+                                                                                If the product requested has scopes associated with it, please <a href="https://intel.service-now.com/nav_to.do?uri=%2Fcom.glideapp.servicecatalog_cat_item_view.do%3Fv%3D1%26sysparm_id%3D4ec42a99dbbe9910aa60f482ba96196b%26sysparm_link_parent%3Db4a907671be7e010bcb7326edc4bcb67%26sysparm_catalog%3D10733351db0a94102cc2a5bb1396190b%26sysparm_catalog_view%3Dcatalog_IT_Service_Catalog%26sysparm_view%3Dcatalog_IT_Service_Catalog">Submit a ticket</a> to Azure Team to add scopes to your B2C application
+                                                                                </strong></p>
+                                                                        <% }%>
 
                                                                     </td>
                                                                 </tr>

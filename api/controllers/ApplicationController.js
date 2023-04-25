@@ -34,35 +34,36 @@ module.exports = {
         let type = body.type;
         let action = body.action;
         let scopes = body.scopes;
+        let apptype = body.appType;
         let developer;
         let isClientSecretExpiry = body.isClientSecretExpiry;
         let clientIdRegex = /^(\{){0,1}[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}(\}){0,1}$/;
         //* Generate Unique Id
         let xid = uuidv4();
 
-        
+
         try {
 
-                        //* Get App Details
-                        let appDetailsResult = await ApplicationDetails.find({ id: apimAppId , ClientSecretExpired : 0}).sort('updatedAt DESC');
+            //* Get App Details
+            let appDetailsResult = await ApplicationDetails.find({ id: apimAppId, ClientSecretExpired: 0 }).sort('updatedAt DESC');
 
-                        if (appDetailsResult.length > 0) {
-                            azureAppName = appDetailsResult[0].AzureRegisteredAppName;
-                            apimAppName = appDetailsResult[0].AppName;
-                            developer = appDetailsResult[0].Developer;
-                        }
+            if (appDetailsResult.length > 0) {
+                azureAppName = appDetailsResult[0].AzureRegisteredAppName;
+                apimAppName = appDetailsResult[0].AppName;
+                developer = appDetailsResult[0].Developer;
+            }
 
             //* Call azure app creation and apim updation service
             sails.log.info("XID: " + xid + " | ", new Date, ": ApplicationController.azureAppCreationAndUpdationOfApimApp: Calling azure app creation and apim app updation service");
-            let azureAppCreationAndUpdationOfApimAppResult = await azureAndApimServices.azureAppCreationAndUpdationInApim(xid, azureToken, azureConfig, azureAppName, redirectUriConfig, groupMembershipClaims, idToken, accessToken, samlToken, nononceScope, apimToken, apimConfig, apimAppName, apimAppId, org, developer, clientIdRegex, isClientSecretExpiry);
+            let azureAppCreationAndUpdationOfApimAppResult = await azureAndApimServices.azureAppCreationAndUpdationInApim(xid, azureToken, azureConfig, azureAppName, redirectUriConfig, groupMembershipClaims, idToken, accessToken, samlToken, nononceScope, apimToken, apimConfig, apimAppName, apimAppId, org, developer, clientIdRegex, isClientSecretExpiry, apptype);
             if (azureAppCreationAndUpdationOfApimAppResult[0] === 'SUCCESS') {
                 sails.log.info("XID: " + xid + " | ", new Date, `: ApplicationController.azureAppCreationAndUpdationOfApimApp: ${azureAppCreationAndUpdationOfApimAppResult[1]}`);
 
                 //* Delete the record from azure processing task table
                 try {
-                   // let deleteAzureTaskResult = await PendingAzureProcessingTasks.destroy({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes });
-                    let deleteAzureTaskResult = await PendingAzureProcessingTasks.update({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes }).set({Processing:4});
-                    let deleteAzureTaskResult1 = await PendingAzureProcessingTasks.update({ id: apimAppId, Organization: org, Processing: 1}).set({Processing:0});
+                    // let deleteAzureTaskResult = await PendingAzureProcessingTasks.destroy({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes });
+                    let deleteAzureTaskResult = await PendingAzureProcessingTasks.update({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes }).set({ Processing: 4 });
+                    let deleteAzureTaskResult1 = await PendingAzureProcessingTasks.update({ id: apimAppId, Organization: org, Processing: 1 }).set({ Processing: 0 });
                     //sails.log.info("XID: " + xid + " | ", new Date, `ApplicationController.azureAppCreationAndUpdationOfApimApp: Successfully updated the app processing status from 1 to 0.`);
 
                 }
@@ -129,6 +130,7 @@ module.exports = {
         let type = body.type;
         let action = body.action;
         let scopes = body.scopes;
+        let apptype = body.appType;
         let developer;
         let isClientSecretExpiry = body.isClientSecretExpiry;
         let clientIdRegex = /^(\{){0,1}[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}(\}){0,1}$/;
@@ -138,25 +140,25 @@ module.exports = {
 
         try {
 
-                       //* Get App Details
-                       let appDetailsResult = await ApplicationDetails.find({ id: apimAppId , ClientSecretExpired : 0}).sort('updatedAt DESC');
+            //* Get App Details
+            let appDetailsResult = await ApplicationDetails.find({ id: apimAppId, ClientSecretExpired: 0 }).sort('updatedAt DESC');
 
-                       if (appDetailsResult.length > 0) {
-                        azureAppName = appDetailsResult[0].AzureRegisteredAppName;
-                        apimAppName = appDetailsResult[0].AppName;
-                        developer = appDetailsResult[0].Developer;
-                       }
+            if (appDetailsResult.length > 0) {
+                azureAppName = appDetailsResult[0].AzureRegisteredAppName;
+                apimAppName = appDetailsResult[0].AppName;
+                developer = appDetailsResult[0].Developer;
+            }
 
             //* Call azure app creation, apim updation service and scope addition
             sails.log.info("XID: " + xid + " | ", new Date, ": ApplicationController.azureAppCreationAndScopeAddition: Calling azure app creation, apim app updation and scope addition service");
-            let azureAppCreationAndScopeAdditionResult = await azureAndApimServices.azureAppCreationAndScopeAddition(xid, azureToken, azureConfig, azureAppName, redirectUriConfig, groupMembershipClaims, idToken, accessToken, samlToken, nononceScope, apimToken, apimConfig, apimAppName, apimAppId, org, developer, clientIdRegex, isClientSecretExpiry, scopes);
+            let azureAppCreationAndScopeAdditionResult = await azureAndApimServices.azureAppCreationAndScopeAddition(xid, azureToken, azureConfig, azureAppName, redirectUriConfig, groupMembershipClaims, idToken, accessToken, samlToken, nononceScope, apimToken, apimConfig, apimAppName, apimAppId, org, developer, clientIdRegex, isClientSecretExpiry, scopes, apptype);
             if (azureAppCreationAndScopeAdditionResult[0] === 'SUCCESS') {
                 sails.log.info("XID: " + xid + " | ", new Date, `: ApplicationController.azureAppCreationAndScopeAddition: ${azureAppCreationAndScopeAdditionResult[1]}`);
 
                 //* Delete the record from azure processing task table
                 try {
-                   // let deleteAzureTaskResult = await PendingAzureProcessingTasks.destroy({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes });
-                   let deleteAzureTaskResult = await PendingAzureProcessingTasks.update({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes }).set({Processing:4});
+                    // let deleteAzureTaskResult = await PendingAzureProcessingTasks.destroy({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes });
+                    let deleteAzureTaskResult = await PendingAzureProcessingTasks.update({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes }).set({ Processing: 4 });
 
                 }
                 catch (error) {
@@ -216,6 +218,7 @@ module.exports = {
         let type = body.type;
         let action = body.action;
         let scopes = body.scopes;
+        let apptype = body.appType;
         let azureAppId;
         let apimAppName;
 
@@ -224,14 +227,14 @@ module.exports = {
 
         try {
 
-                        //* Get App Details
-                        let appDetailsResult = await ApplicationDetails.find({ id: apimAppId , ClientSecretExpired : 0}).sort('updatedAt DESC');
+            //* Get App Details
+            let appDetailsResult = await ApplicationDetails.find({ id: apimAppId, ClientSecretExpired: 0 }).sort('updatedAt DESC');
 
-                        if (appDetailsResult.length > 0) {
-                            azureAppName = appDetailsResult[0].AzureRegisteredAppName;
-                            azureAppId = appDetailsResult[0].AzureRegisteredAppId;
-                            apimAppName = appDetailsResult[0].AppName;
-                        }
+            if (appDetailsResult.length > 0) {
+                azureAppName = appDetailsResult[0].AzureRegisteredAppName;
+                azureAppId = appDetailsResult[0].AzureRegisteredAppId;
+                apimAppName = appDetailsResult[0].AppName;
+            }
 
             //* Call azure app scope addition
             sails.log.info("XID: " + xid + " | ", new Date, ": ApplicationController.azureAppScopeAddition: Calling azure app scope addition service");
@@ -242,8 +245,8 @@ module.exports = {
                 //* Delete the record from azure processing task table
                 try {
                     //let deleteAzureTaskResult = await PendingAzureProcessingTasks.destroy({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes });
-                    let deleteAzureTaskResult = await PendingAzureProcessingTasks.update({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes }).set({Processing:4});
-                    let deleteAzureTaskResult1 = await PendingAzureProcessingTasks.update({ id: apimAppId, Organization: org, Processing: 1}).set({Processing:0});
+                    let deleteAzureTaskResult = await PendingAzureProcessingTasks.update({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes }).set({ Processing: 4 });
+                    let deleteAzureTaskResult1 = await PendingAzureProcessingTasks.update({ id: apimAppId, Organization: org, Processing: 1 }).set({ Processing: 0 });
                     //sails.log.info("XID: " + xid + " | ", new Date, `ApplicationController.azureAppCreationAndUpdationOfApimApp: Successfully updated the app processing status from 1 to 0.`);
                     //let updateappassociatedproductResult = await ApigeeAppAssociatedAPIProducts.update({ id: apimAppId}).set({ScopeAdditionInAzure:1});
                 }
@@ -303,6 +306,7 @@ module.exports = {
         let type = body.type;
         let action = body.action;
         let scopes = body.scopes;
+        let apptype = body.appType;
         let azureAppId;
         let apimAppName;
 
@@ -312,7 +316,7 @@ module.exports = {
         try {
 
             //* Get App Details
-            let appDetailsResult = await ApplicationDetails.find({ id: apimAppId , ClientSecretExpired : 0}).sort('updatedAt DESC');
+            let appDetailsResult = await ApplicationDetails.find({ id: apimAppId, ClientSecretExpired: 0 }).sort('updatedAt DESC');
 
             if (appDetailsResult.length > 0) {
                 azureAppName = appDetailsResult[0].AzureRegisteredAppName;
@@ -329,8 +333,8 @@ module.exports = {
                 //* Delete the record from azure processing task table
                 try {
                     //let deleteAzureTaskResult = await PendingAzureProcessingTasks.destroy({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes });
-                    let deleteAzureTaskResult = await PendingAzureProcessingTasks.update({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes }).set({Processing:4});
-                    let deleteAzureTaskResult1 = await PendingAzureProcessingTasks.update({ id: apimAppId, Organization: org, Processing: 1}).set({Processing:0});
+                    let deleteAzureTaskResult = await PendingAzureProcessingTasks.update({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes }).set({ Processing: 4 });
+                    let deleteAzureTaskResult1 = await PendingAzureProcessingTasks.update({ id: apimAppId, Organization: org, Processing: 1 }).set({ Processing: 0 });
                     //sails.log.info("XID: " + xid + " | ", new Date, `ApplicationController.azureAppCreationAndUpdationOfApimApp: Successfully updated the app processing status from 1 to 0.`);
 
                 }
@@ -397,6 +401,7 @@ module.exports = {
         let type = body.type;
         let action = body.action;
         let scopes = body.scopes;
+        let apptype = body.appType;
         let developer;
         let isClientSecretExpiry = body.isClientSecretExpiry;
         let clientIdRegex = /^(\{){0,1}[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}(\}){0,1}$/;
@@ -407,26 +412,26 @@ module.exports = {
 
         try {
 
-              //* Get App Details
-              let appDetailsResult = await ApplicationDetails.find({ id: apimAppId , ClientSecretExpired : 0}).sort('updatedAt DESC');
+            //* Get App Details
+            let appDetailsResult = await ApplicationDetails.find({ id: apimAppId, ClientSecretExpired: 0 }).sort('updatedAt DESC');
 
-              if (appDetailsResult.length > 0) {
+            if (appDetailsResult.length > 0) {
                 azureAppName = appDetailsResult[0].AzureRegisteredAppName;
                 apimAppName = appDetailsResult[0].AppName;
                 developer = appDetailsResult[0].Developer;
-              }
+            }
 
             //* Call azure app creation, apim updation service and resource scope/role addition
             sails.log.info("XID: " + xid + " | ", new Date, ": ApplicationController.azureAppCreationAndResourceScopeAddition: Calling azure app creation, apim app updation and resource scope/role addition service");
-            let azureAppCreationAndScopeAdditionResult = await azureAndApimServices.azureAppCreationAndResourceScopeAddition(xid, azureToken, azureConfig, azureAppName, redirectUriConfig, groupMembershipClaims, idToken, accessToken, samlToken, nononceScope, apimToken, apimConfig, apimAppName, apimAppId, org, developer, clientIdRegex, isClientSecretExpiry, scopes);
+            let azureAppCreationAndScopeAdditionResult = await azureAndApimServices.azureAppCreationAndResourceScopeAddition(xid, azureToken, azureConfig, azureAppName, redirectUriConfig, groupMembershipClaims, idToken, accessToken, samlToken, nononceScope, apimToken, apimConfig, apimAppName, apimAppId, org, developer, clientIdRegex, isClientSecretExpiry, scopes, apptype);
             if (azureAppCreationAndScopeAdditionResult[0] === 'SUCCESS') {
                 sails.log.info("XID: " + xid + " | ", new Date, `: ApplicationController.azureAppCreationAndResourceScopeAddition: ${azureAppCreationAndScopeAdditionResult[1]}`);
 
                 //* Delete the record from azure processing task table
                 try {
-                   // let deleteAzureTaskResult = await PendingAzureProcessingTasks.destroy({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes });
-                   let deleteAzureTaskResult = await PendingAzureProcessingTasks.update({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes }).set({Processing:4});
-                   // let deleteAzureTaskResult1 = await ApigeeAppAssociatedAPIProducts.update({ id: apimAppId,   })
+                    // let deleteAzureTaskResult = await PendingAzureProcessingTasks.destroy({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes });
+                    let deleteAzureTaskResult = await PendingAzureProcessingTasks.update({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes }).set({ Processing: 4 });
+                    // let deleteAzureTaskResult1 = await ApigeeAppAssociatedAPIProducts.update({ id: apimAppId,   })
                 }
                 catch (error) {
                     sails.log.error("XID: " + xid + " | ", new Date, `: ApplicationController.azureAppCreationAndResourceScopeAddition: ERROR: Failed to delete the entry from azure task table for app id ${apimAppId} of type ${type} under ${org} organization. Error is ${error}`);
@@ -485,6 +490,7 @@ module.exports = {
         let type = body.type;
         let action = body.action;
         let scopes = body.scopes;
+        let apptype = body.appType;
         let azureAppId;
         let apimAppName;
 
@@ -493,14 +499,14 @@ module.exports = {
 
         try {
 
-                        //* Get App Details
-                        let appDetailsResult = await ApplicationDetails.find({ id: apimAppId , ClientSecretExpired : 0}).sort('updatedAt DESC');
+            //* Get App Details
+            let appDetailsResult = await ApplicationDetails.find({ id: apimAppId, ClientSecretExpired: 0 }).sort('updatedAt DESC');
 
-                        if (appDetailsResult.length > 0) {
-                            azureAppName = appDetailsResult[0].AzureRegisteredAppName;
-                            azureAppId = appDetailsResult[0].AzureRegisteredAppId;
-                            apimAppName = appDetailsResult[0].AppName;
-                        }
+            if (appDetailsResult.length > 0) {
+                azureAppName = appDetailsResult[0].AzureRegisteredAppName;
+                azureAppId = appDetailsResult[0].AzureRegisteredAppId;
+                apimAppName = appDetailsResult[0].AppName;
+            }
             //console.log('app id :' , apimAppId )
             //console.log('resource scopes to be added :' , scopes )
 
@@ -517,13 +523,13 @@ module.exports = {
                 if (roleAdditionResult[0] === 'SUCCESS') {
 
                     sails.log.info("XID: " + xid + " | ", new Date, `: ApplicationController.azureAppResourceScopeAndRoleAddition: ${roleAdditionResult[1]}`);
-                     
+
                     //* Delete the record from azure processing task table
                     try {
                         //let deleteAzureTaskResult = await PendingAzureProcessingTasks.destroy({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes });
-                        let deleteAzureTaskResult = await PendingAzureProcessingTasks.update({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes }).set({Processing:4});
-                        let deleteAzureTaskResult1 = await PendingAzureProcessingTasks.update({ id: apimAppId, Organization: org, Processing: 1}).set({Processing:0});
-                    //sails.log.info("XID: " + xid + " | ", new Date, `ApplicationController.azureAppCreationAndUpdationOfApimApp: Successfully updated the app processing status from 1 to 0.`);
+                        let deleteAzureTaskResult = await PendingAzureProcessingTasks.update({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes }).set({ Processing: 4 });
+                        let deleteAzureTaskResult1 = await PendingAzureProcessingTasks.update({ id: apimAppId, Organization: org, Processing: 1 }).set({ Processing: 0 });
+                        //sails.log.info("XID: " + xid + " | ", new Date, `ApplicationController.azureAppCreationAndUpdationOfApimApp: Successfully updated the app processing status from 1 to 0.`);
 
                     }
                     catch (error) {
@@ -552,7 +558,7 @@ module.exports = {
                     res.status(200).json({ "status": roleAdditionResult[0], "message": roleAdditionResult[1] });
                 }
 
-               
+
             }
             else if (scopeAdditionResult[0] === 'ERROR') {
                 sails.log.error("XID: " + xid + " | ", new Date, `: ApplicationController.azureAppResourceScopeAndRoleAddition: ERROR: ${scopeAdditionResult[1]}`);
@@ -601,6 +607,7 @@ module.exports = {
         let type = body.type;
         let action = body.action;
         let scopes = body.scopes;
+        let apptype = body.appType;
         let azureAppId;
         let apimAppName;
 
@@ -610,7 +617,7 @@ module.exports = {
         try {
 
             //* Get App Details
-            let appDetailsResult = await ApplicationDetails.find({ id: apimAppId , ClientSecretExpired : 0}).sort('updatedAt DESC');
+            let appDetailsResult = await ApplicationDetails.find({ id: apimAppId, ClientSecretExpired: 0 }).sort('updatedAt DESC');
 
             if (appDetailsResult.length > 0) {
                 azureAppName = appDetailsResult[0].AzureRegisteredAppName;
@@ -626,16 +633,16 @@ module.exports = {
 
                 //* Remove resource role
                 let roleRemovalResult = await azureServices.removeResourceRole(xid, azureToken, azureConfig, scopes, azureAppId, azureAppName);
-                if(roleRemovalResult[0] === 'SUCCESS') {
+                if (roleRemovalResult[0] === 'SUCCESS') {
 
                     sails.log.info("XID: " + xid + " | ", new Date, `: ApplicationController.azureAppResourceScopeAndRoleRemoval: ${roleRemovalResult[1]}`);
 
                     //* Delete the record from azure processing task table
                     try {
                         //let deleteAzureTaskResult = await PendingAzureProcessingTasks.destroy({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes });
-                        let deleteAzureTaskResult = await PendingAzureProcessingTasks.update({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes }).set({Processing:4});
-                        let deleteAzureTaskResult1 = await PendingAzureProcessingTasks.update({ id: apimAppId, Organization: org, Processing: 1}).set({Processing:0});
-                    //sails.log.info("XID: " + xid + " | ", new Date, `ApplicationController.azureAppCreationAndUpdationOfApimApp: Successfully updated the app processing status from 1 to 0.`);
+                        let deleteAzureTaskResult = await PendingAzureProcessingTasks.update({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes }).set({ Processing: 4 });
+                        let deleteAzureTaskResult1 = await PendingAzureProcessingTasks.update({ id: apimAppId, Organization: org, Processing: 1 }).set({ Processing: 0 });
+                        //sails.log.info("XID: " + xid + " | ", new Date, `ApplicationController.azureAppCreationAndUpdationOfApimApp: Successfully updated the app processing status from 1 to 0.`);
 
                     }
                     catch (error) {
@@ -648,7 +655,7 @@ module.exports = {
                     res.status(200).json({ "status": roleRemovalResult[0], "message": roleRemovalResult[1] });
 
                 }
-                else if(roleRemovalResult[0] === 'ERROR') {
+                else if (roleRemovalResult[0] === 'ERROR') {
 
                     sails.log.error("XID: " + xid + " | ", new Date, `: ApplicationController.azureAppResourceScopeAndRoleRemoval: ERROR: ${roleRemovalResult[1]}`);
 
@@ -666,7 +673,7 @@ module.exports = {
                     res.status(200).json({ "status": roleRemovalResult[0], "message": roleRemovalResult[1] });
 
                 }
-                
+
             }
             else if (scopeRemovalResult[0] === 'ERROR') {
                 sails.log.error("XID: " + xid + " | ", new Date, `: ApplicationController.azureAppResourceScopeAndRoleRemoval: ERROR: ${scopeRemovalResult[1]}`);
@@ -715,6 +722,7 @@ module.exports = {
         let type = body.type;
         let action = body.action;
         let scopes = body.scopes;
+        let apptype = body.appType;
         let azureAppId;
         let apimAppName;
 
@@ -723,9 +731,9 @@ module.exports = {
 
         try {
 
-                        
+
             //* Get App Details
-            let appDetailsResult = await ApplicationDetails.find({ id: apimAppId , ClientSecretExpired : 0}).sort('updatedAt DESC');
+            let appDetailsResult = await ApplicationDetails.find({ id: apimAppId, ClientSecretExpired: 0 }).sort('updatedAt DESC');
 
             if (appDetailsResult.length > 0) {
                 azureAppName = appDetailsResult[0].AzureRegisteredAppName;
@@ -741,9 +749,9 @@ module.exports = {
 
                 //* Delete the record from azure processing task table
                 try {
-                   // let deleteAzureTaskResult = await PendingAzureProcessingTasks.destroy({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes });
-                   let deleteAzureTaskResult = await PendingAzureProcessingTasks.update({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes }).set({Processing:4});
-                   let deleteAzureTaskResult1 = await PendingAzureProcessingTasks.update({ id: apimAppId, Organization: org, Processing: 1}).set({Processing:0});
+                    // let deleteAzureTaskResult = await PendingAzureProcessingTasks.destroy({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes });
+                    let deleteAzureTaskResult = await PendingAzureProcessingTasks.update({ id: apimAppId, Type: type, Organization: org, Action: action, SecondaryIdentifier: scopes }).set({ Processing: 4 });
+                    let deleteAzureTaskResult1 = await PendingAzureProcessingTasks.update({ id: apimAppId, Organization: org, Processing: 1 }).set({ Processing: 0 });
                     //sails.log.info("XID: " + xid + " | ", new Date, `ApplicationController.azureAppCreationAndUpdationOfApimApp: Successfully updated the app processing status from 1 to 0.`);
 
                 }
@@ -793,5 +801,5 @@ module.exports = {
 
     },
 
-    
+
 }
